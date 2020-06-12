@@ -131,6 +131,16 @@ func sendLike(url string, params []Param) {
 	}()
 }
 
+func setStatus(s *discordgo.Session, event *discordgo.Ready) {
+	guilds := s.State.Guilds
+	s.UpdateStatus(0, "!mop | "+strconv.Itoa(len(guilds))+" guilds")
+	statusTimer := time.NewTimer(20 * time.Second)
+	go func() {
+		<-statusTimer.C
+		setStatus(s, event)
+	}()
+}
+
 func main() {
 	setApiKey()
 	discord, err := discordgo.New("Bot " + getToken())
@@ -139,6 +149,7 @@ func main() {
 		return
 	}
 
+	discord.AddHandler(onReady)
 	discord.AddHandler(messageCreate)
 	discord.AddHandler(messageReactionAdd)
 
@@ -154,6 +165,10 @@ func main() {
 	<-sc
 
 	discord.Close()
+}
+
+func onReady(s *discordgo.Session, event *discordgo.Ready) {
+	setStatus(s, event)
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
