@@ -225,6 +225,9 @@ func messageReactionAdd(s *discordgo.Session, r *discordgo.MessageReactionAdd) {
 		return
 	}
 	msg, _ := s.ChannelMessage(r.ChannelID, r.MessageID)
+	if msg.Author.ID != s.State.User.ID {
+		return
+	}
 	jokeID := strings.Replace(msg.Embeds[0].Title, "Mop ", "", -1)
 	var jokeIDParam Param
 	jokeIDParam.NAME = "joke"
