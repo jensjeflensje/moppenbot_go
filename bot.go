@@ -184,6 +184,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		param.VALUE = "true"
 		params := []Param{param}
 
+		url := "https://moppenbot.nl/api/random/"
+
 		if len(args) > 0 {
 			if args[0] == "nsfw" {
 				var param Param
@@ -195,9 +197,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				param.NAME = "q"
 				param.VALUE = query
 				params = append(params, param)
+				url = "https://moppenbot.nl/api/search/"
 			}
 		}
-		joke := getJoke(s, m, "https://moppenbot.nl/api/random/", params)
+		joke := getJoke(s, m, url, params)
 		if joke.JOKE.JOKE == "" {
 			fmt.Println("Request error")
 			s.ChannelMessageSend(m.ChannelID, "Error tijdens opvragen.")
