@@ -24,6 +24,10 @@ type Joke struct {
 	}
 }
 
+type Amount struct {
+	AMOUNT int
+}
+
 type Param struct {
 	*list.Element
 	NAME  string
@@ -31,6 +35,7 @@ type Param struct {
 }
 
 var apiKey string
+var statusState int
 
 func getToken() (token string) {
 	data, err := ioutil.ReadFile("./config.json")
@@ -110,6 +115,37 @@ func getJoke(s *discordgo.Session, m *discordgo.MessageCreate, url string, param
 	return joke
 }
 
+func getAmount(url string) Amount {
+	var amount Amount
+	req, err := http.NewRequest("get", url, nil)
+	if err != nil {
+		fmt.Println("API niet beschikbaar, ", err)
+		return amount
+	}
+	resp, err := http.Get(req.URL.String())
+	if err != nil {
+		fmt.Println("API niet beschikbaar, ", err)
+		return amount
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("API antwoord lezen mislukt, ", err)
+		return amount
+	}
+
+	err = json.Unmarshal(data, &amount)
+	if err != nil {
+		fmt.Println("JSON error, ", err)
+		return amount
+	}
+	return amount
+}
+
 func sendLike(url string, params []Param) {
 	req, err := http.NewRequest("get", url, nil)
 	if err != nil {
@@ -132,8 +168,15 @@ func sendLike(url string, params []Param) {
 }
 
 func setStatus(s *discordgo.Session, event *discordgo.Ready) {
-	guilds := s.State.Guilds
-	s.UpdateStatus(0, "!mop | "+strconv.Itoa(len(guilds))+" guilds")
+	if statusState == 0 {
+		guilds := s.State.Guilds
+		s.UpdateStatus(0, "!mop | "+strconv.Itoa(len(guilds))+" guilds")
+		statusState++
+	} else if statusState == 1 {
+		count := getAmount("https://moppenbot.nl/api/count/")
+		s.UpdateStatus(0, "!mop | "+strconv.Itoa(count.AMOUNT)+" moppen")
+		statusState = 0
+	}
 	statusTimer := time.NewTimer(20 * time.Second)
 	go func() {
 		<-statusTimer.C
