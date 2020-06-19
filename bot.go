@@ -256,7 +256,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			Title:       "Mop " + strconv.Itoa(joke.JOKE.ID),
 		}
 
-		jokeMsg, _ := s.ChannelMessageSendEmbed(m.ChannelID, embed)
+		jokeMsg, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
+
+		if err != nil {
+			fmt.Println("Message send error,", err)
+			return
+		}
 
 		s.MessageReactionAdd(jokeMsg.ChannelID, jokeMsg.ID, "👍")
 	}
